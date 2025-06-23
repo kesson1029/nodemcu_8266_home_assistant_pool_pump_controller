@@ -1,0 +1,946 @@
+﻿type: sections
+title: POOL FILTER
+path: pool-filter-new
+max_columns: 3
+sections:
+  - type: grid
+    column_span: 5
+    cards:
+      - type: custom:layout-card
+        layout:
+          name: hello
+        cards:
+          - type: conditional
+            conditions:
+              - entity: input_boolean.show_pool_banner
+                state: "on"
+            card:
+              type: custom:banner-card
+              heading:
+                - mdi:shower
+                - Pool Pump
+                - mdi:paper-roll
+              card_mod:
+                style: |
+                  ha-card h2 {
+                    margin: 10px !important;
+                    padding: 0 !important;
+                  }
+                  ha-card h2 span {
+                    font-size: 30px !important;
+                  }
+          - type: horizontal-stack
+            cards:
+              - type: custom:button-card
+                entity: input_boolean.pool_pump_start
+                icon: mdi:pump
+                icon_height: 50px
+                name: >
+                  [[[ return states['input_text.filter_command'].state ===
+                  'start' ? 'Running' : 'Start'; ]]]
+                tap_action:
+                  action: call-service
+                  service: automation.trigger
+                  service_data:
+                    entity_id: automation.button_trigger_start
+                styles:
+                  icon:
+                    - color: >
+                        [[[ return states['input_text.filter_command'].state ===
+                        'start' ? 'yellow' : 'lightgray'; ]]]
+                  card:
+                    - padding: 10px 0px 0px 0px
+                  name:
+                    - padding-top: 10px
+                    - padding-bottom: 5px
+              - type: custom:button-card
+                entity: input_boolean.pool_pump_stop
+                icon: mdi:pump-off
+                icon_height: 50px
+                name: >
+                  [[[ return states['input_text.filter_command'].state ===
+                  'stop' ? 'Stopped' : 'Stop'; ]]]
+                tap_action:
+                  action: call-service
+                  service: automation.trigger
+                  service_data:
+                    entity_id: automation.button_trigger_stop
+                styles:
+                  icon:
+                    - color: >
+                        [[[ return states['input_text.filter_command'].state ===
+                        'stop' ? 'yellow' : 'lightgray'; ]]]
+                  card:
+                    - padding: 10px 0px 0px 0px
+                  name:
+                    - padding-top: 10px
+                    - padding-bottom: 5px
+              - type: custom:button-card
+                entity: input_boolean.pool_pump_run
+                icon: mdi:run-fast
+                icon_height: 50px
+                name: Run Auto
+                tap_action:
+                  action: call-service
+                  service: automation.trigger
+                  service_data:
+                    entity_id: automation.button_trigger_run
+                styles:
+                  icon:
+                    - color: >
+                        [[[ return states['input_text.filter_command'].state ===
+                        'run' ? 'yellow' : 'lightgray'; ]]]
+                  card:
+                    - padding: 10px 0px 0px 0px
+                  name:
+                    - padding-top: 10px
+                    - padding-bottom: 5px
+          - type: horizontal-stack
+            cards:
+              - type: custom:banner-card
+                heading:
+                  - Speed
+                card_mod:
+                  style: |
+                    ha-card h2 {
+                      margin: 2px !important; /* Important: Override any existing margin */
+                      padding: 0 !important; /* Important: Override any existing padding */
+                    }
+                    ha-card h2 span {
+                      font-size: 18px !important; /* Important: Override any existing font size */
+                    }
+              - type: custom:banner-card
+                heading:
+                  - Mode
+                card_mod:
+                  style: |
+                    ha-card h2 {
+                      margin: 2px !important; /* Important: Override any existing margin */
+                      padding: 0 !important; /* Important: Override any existing padding */
+                    }
+                    ha-card h2 span {
+                      font-size: 18px !important; /* Important: Override any existing font size */
+                    }
+          - type: horizontal-stack
+            cards:
+              - type: custom:button-card
+                entity: input_boolean.pool_pump_low
+                icon: mdi:chevron-double-down
+                icon_height: 50px
+                name: Low
+                tap_action:
+                  action: call-service
+                  service: automation.trigger
+                  service_data:
+                    entity_id: automation.button_trigger_low
+                styles:
+                  icon:
+                    - color: >
+                        [[[ return states['input_text.filter_highlow'].state ===
+                        'low' ? 'yellow' : 'lightgray'; ]]]
+                  card:
+                    - padding: 10px 0px 0px 0px
+                  name:
+                    - padding-top: 10px
+                    - padding-bottom: 5px
+              - type: custom:button-card
+                entity: input_boolean.pool_pump_high
+                icon: mdi:chevron-triple-up
+                icon_height: 50px
+                name: High
+                tap_action:
+                  action: call-service
+                  service: automation.trigger
+                  service_data:
+                    entity_id: automation.button_trigger_high
+                styles:
+                  icon:
+                    - color: >
+                        [[[ return states['input_text.filter_highlow'].state ===
+                        'high' ? 'yellow' : 'lightgray'; ]]]
+                  card:
+                    - padding: 10px 0px 0px 0px
+                  name:
+                    - padding-top: 10px
+                    - padding-bottom: 5px
+              - type: custom:button-card
+                entity: input_boolean.pool_pump_auto
+                icon_height: 50px
+                name: Auto
+                tap_action:
+                  action: call-service
+                  service: automation.trigger
+                  service_data:
+                    entity_id: automation.button_trigger_auto
+                styles:
+                  icon:
+                    - color: >
+                        [[[ return states['input_text.filter_status'].state ===
+                        'auto' ? 'yellow' : 'lightgray'; ]]]
+                  card:
+                    - padding: 10px 0px 0px 0px
+                  name:
+                    - padding-top: 10px
+                    - padding-bottom: 5px
+              - type: custom:button-card
+                entity: input_boolean.pool_pump_manual
+                icon: mdi:autorenew-off
+                icon_height: 50px
+                name: Manual
+                tap_action:
+                  action: call-service
+                  service: automation.trigger
+                  service_data:
+                    entity_id: automation.button_trigger_manual
+                styles:
+                  icon:
+                    - color: >
+                        [[[ return states['input_text.filter_status'].state ===
+                        'manual' ? 'yellow' : 'lightgray'; ]]]
+                  card:
+                    - padding: 10px 0px 0px 0px
+                  name:
+                    - padding-top: 10px
+                    - padding-bottom: 5px
+          - type: horizontal-stack
+            cards:
+              - type: custom:time-picker-card
+                entity: input_datetime.pool_pump_start_time_1
+                hour_mode: 12
+                hour_step: 1
+                minute_step: 5
+                layout:
+                  hour_mode: single
+                  align_controls: center
+                  name: header
+                  embedded: false
+                  thin: true
+                hide:
+                  seconds: true
+                  name: false
+                name: Start Time 1
+                tap_action:
+                  - service: ""
+                link_values: true
+              - type: custom:time-picker-card
+                entity: input_datetime.pool_pump_stop_time_1
+                hour_mode: 12
+                hour_step: 1
+                minute_step: 5
+                layout:
+                  hour_mode: single
+                  align_controls: center
+                  name: header
+                  thin: true
+                hide:
+                  seconds: true
+                name: Stop Time 1
+                tap_action:
+                  - service: ""
+          - type: horizontal-stack
+            cards:
+              - type: custom:time-picker-card
+                entity: input_datetime.pool_pump_start_time_2
+                hour_mode: 12
+                hour_step: 1
+                minute_step: 5
+                layout:
+                  hour_mode: single
+                  align_controls: center
+                  name: header
+                  thin: true
+                  embedded: false
+                hide:
+                  seconds: true
+                name: Start Time 2
+              - type: custom:time-picker-card
+                entity: input_datetime.pool_pump_stop_time_2
+                hour_mode: 12
+                hour_step: 1
+                minute_step: 5
+                layout:
+                  hour_mode: single
+                  align_controls: center
+                  name: header
+                  thin: true
+                hide:
+                  seconds: true
+                name: Stop Time 2
+          - type: horizontal-stack
+            cards:
+              - type: custom:time-picker-card
+                entity: input_datetime.pool_pump_manual_run_time
+                hour_mode: 24
+                hour_step: 1
+                minute_step: 5
+                layout:
+                  hour_mode: single
+                  align_controls: center
+                  name: header
+                  thin: true
+                hide:
+                  seconds: true
+        layout_type: custom:grid-layout
+      - type: custom:layout-card
+        layout_type: masonry
+        layout: {}
+        cards:
+          - clock_size: large
+            show_seconds: false
+            type: clock
+          - type: custom:config-template-card
+            entities:
+              - sensor.pool_pump_auto_count_down_minutes
+              - sensor.pool_pump_manual_run_time_minutes
+              - sensor.pool_pump_auto_count_down_formatted
+            card:
+              type: custom:bar-card
+              title: Auto Filtration Status
+              name: ${states["sensor.pool_pump_auto_count_down_formatted"].state}
+              entity: sensor.pool_pump_auto_count_down_minutes
+              max: ${states["sensor.pool_pump_manual_run_time_minutes"].state}
+              value: "off"
+              positions:
+                icon: "off"
+                indicator: "off"
+                minmax: "off"
+                value: "off"
+              card_mod:
+                style: >
+                  /* Targeting both .card-header and :host
+                  ::slotted(.card-header) */
+
+                  .card-header,
+
+                  :host ::slotted(.card-header) {
+                    padding: 12px 106px 16px; /* Adjust padding as needed */
+                  }
+
+                  :host ::slotted(.card-content:not(:first-child)),
+
+                  slot:not(:first-child)::slotted(.card-content) {
+                    padding-top: -1px; /* Adjust padding top as needed */
+                  }       
+
+                  ha-card {
+
+                    --ha-card-header-font-size: 18px;
+                    --ha-card-border-radius: 10px;
+                  }
+
+                  bar-card-backgroundbar {
+                    border-radius: 10px;
+                    height: 100%;
+                  }
+
+                  bar-card-currentbar {
+                    border-radius: 10px;
+                    height: 100%;
+                  }
+
+                  parent-container {
+                    text-align: center;
+                    height: 100%;
+
+                  }
+
+                  bar-card-header {
+                    text-align: center;
+                    height: auto;
+                  }
+
+                  bar-card-title {
+                    display: inline-block;
+                    font-size: 13px;
+                    font-weight: bold;
+                    text-shadow: 1px 1px #0005;
+                  }
+
+                  bar-card-name {
+                    display: block;
+                    margin: 0 auto;
+                    font-size: 13px;
+                    font-weight: bold;
+                    text-shadow: 1px 1px #0005;
+
+                  }
+          - type: custom:config-template-card
+            entities:
+              - input_boolean.pool_pump_serial_monitor_on_off
+              - input_boolean.pool_pump_auto_countdown_disable
+            card:
+              type: entities
+              entities:
+                - type: custom:template-entity-row
+                  entity: input_boolean.pool_pump_auto_countdown_disable
+                  toggle: true
+                  state_color: true
+                  name: >
+                    {% if
+                    is_state('input_boolean.pool_pump_auto_countdown_disable',
+                    'on') %}
+                      Auto Countdown (Paused)
+                    {% else %}
+                      Auto Countdown (Activated)
+                    {% endif %}
+                  card_mod:
+                    style: |
+                      :host {
+                        --paper-item-icon-color: {% if is_state('input_boolean.pool_pump_auto_countdown_disable', 'on') %} #fdd835 {% else %} #44739e {% endif %};
+                      }
+                - type: custom:template-entity-row
+                  entity: input_boolean.pool_pump_serial_monitor_on_off
+                  toggle: true
+                  state_color: true
+                  name: >
+                    {% if
+                    is_state('input_boolean.pool_pump_serial_monitor_on_off',
+                    'on') %}
+                      Monitor (Active)
+                    {% else %}
+                      Monitor (Inactive)
+                    {% endif %}
+                  card_mod:
+                    style: |
+                      :host {
+                        --paper-item-icon-color: {% if is_state('input_boolean.pool_pump_serial_monitor_on_off', 'on') %} #fdd835 {% else %} #44739e {% endif %};
+                      }
+          - type: entities
+            entities:
+              - entity: input_boolean.pool_pump_auto_countdown_disable
+                name: Disable
+            state_color: true
+            title: Disable Auto Countdown
+          - type: history-graph
+            title: Pool Pump Running
+            show_names: true
+            entities:
+              - entity: sensor.pool_pump_state_display
+              - entity: sensor.pool_pump_automan_display
+              - entity: input_text.filter_highlow
+                name: Speed
+            logarithmic_scale: false
+            hours_to_show: 12
+          - show_name: true
+            show_icon: false
+            type: button
+            tap_action:
+              action: call-service
+              service: mqtt.publish
+              target: {}
+              data:
+                qos: 0
+                retain: false
+                topic: home/commands
+                payload: writetimerstomemory
+            entity: input_boolean.pool_timers_commit_to_memory
+            name: Commit Pool Times to Memory
+            show_state: true
+      - type: custom:mod-card
+        card:
+          type: iframe
+          url: http://kesson1029.duckdns.org:8080/
+          aspect_ratio: 150%
+        style: |
+          ha-card {
+            height: 2000px;  # Change this value to your desired height
+            overflow: auto;  # Ensure the card itself can scroll if needed
+          }
+          iframe {
+            height: 100%;  # Make sure the iframe takes up the full height of the card
+            width: 100%;  # Ensure the iframe takes up the full width of the card
+            overflow: auto;  # Ensure the iframe content is scrollable
+          }
+cards:
+  - type: custom:layout-card
+    layout:
+      name: hello
+    cards:
+      - type: custom:banner-card
+        heading:
+          - mdi:shower
+          - Pool Pump
+          - mdi:paper-roll
+        card_mod:
+          style: |
+            ha-card h2 {
+              margin: 10px !important; /* Important: Override any existing margin */
+              padding: 0 !important; /* Important: Override any existing padding */
+            }
+            ha-card h2 span {
+              font-size: 30px !important; /* Important: Override any existing font size */
+            }
+      - type: horizontal-stack
+        cards:
+          - type: custom:button-card
+            entity: input_boolean.pool_pump_start
+            icon: mdi:pump
+            icon_height: 50px
+            name: Start
+            tap_action:
+              action: call-service
+              service: automation.trigger
+              service_data:
+                entity_id: automation.button_trigger_start
+            styles:
+              icon:
+                - color: >
+                    [[[ return states['input_text.filter_command'].state ===
+                    'start' ? 'yellow' : 'lightgray'; ]]]
+              card:
+                - padding: 10px 0px 0px 0px
+              name:
+                - padding-top: 10px
+                - padding-bottom: 5px
+          - type: custom:button-card
+            entity: input_boolean.pool_pump_stop
+            icon: mdi:pump-off
+            icon_height: 50px
+            name: Stop
+            tap_action:
+              action: call-service
+              service: automation.trigger
+              service_data:
+                entity_id: automation.button_trigger_stop
+            styles:
+              icon:
+                - color: >
+                    [[[ return states['input_text.filter_command'].state ===
+                    'stop' ? 'yellow' : 'lightgray'; ]]]
+              card:
+                - padding: 10px 0px 0px 0px
+              name:
+                - padding-top: 10px
+                - padding-bottom: 5px
+          - type: custom:button-card
+            entity: input_boolean.pool_pump_run
+            icon: mdi:run-fast
+            icon_height: 50px
+            name: Run Auto
+            tap_action:
+              action: call-service
+              service: automation.trigger
+              service_data:
+                entity_id: automation.button_trigger_run
+            styles:
+              icon:
+                - color: >
+                    [[[ return states['input_text.filter_command'].state ===
+                    'run' ? 'yellow' : 'lightgray'; ]]]
+              card:
+                - padding: 10px 0px 0px 0px
+              name:
+                - padding-top: 10px
+                - padding-bottom: 5px
+      - type: horizontal-stack
+        cards:
+          - type: custom:banner-card
+            heading:
+              - Speed
+            card_mod:
+              style: |
+                ha-card h2 {
+                  margin: 2px !important; /* Important: Override any existing margin */
+                  padding: 0 !important; /* Important: Override any existing padding */
+                }
+                ha-card h2 span {
+                  font-size: 18px !important; /* Important: Override any existing font size */
+                }
+          - type: custom:banner-card
+            heading:
+              - Mode
+            card_mod:
+              style: |
+                ha-card h2 {
+                  margin: 2px !important; /* Important: Override any existing margin */
+                  padding: 0 !important; /* Important: Override any existing padding */
+                }
+                ha-card h2 span {
+                  font-size: 18px !important; /* Important: Override any existing font size */
+                }
+      - type: horizontal-stack
+        cards:
+          - type: custom:button-card
+            entity: input_boolean.pool_pump_low
+            icon: mdi:chevron-double-down
+            icon_height: 50px
+            name: Low
+            tap_action:
+              action: call-service
+              service: automation.trigger
+              service_data:
+                entity_id: automation.button_trigger_low
+            styles:
+              icon:
+                - color: >
+                    [[[ return states['input_text.filter_highlow'].state ===
+                    'low' ? 'yellow' : 'lightgray'; ]]]
+              card:
+                - padding: 10px 0px 0px 0px
+              name:
+                - padding-top: 10px
+                - padding-bottom: 5px
+          - type: custom:button-card
+            entity: input_boolean.pool_pump_high
+            icon: mdi:chevron-triple-up
+            icon_height: 50px
+            name: High
+            tap_action:
+              action: call-service
+              service: automation.trigger
+              service_data:
+                entity_id: automation.button_trigger_high
+            styles:
+              icon:
+                - color: >
+                    [[[ return states['input_text.filter_highlow'].state ===
+                    'high' ? 'yellow' : 'lightgray'; ]]]
+              card:
+                - padding: 10px 0px 0px 0px
+              name:
+                - padding-top: 10px
+                - padding-bottom: 5px
+          - type: custom:button-card
+            entity: input_boolean.pool_pump_auto
+            icon_height: 50px
+            name: Auto
+            tap_action:
+              action: call-service
+              service: automation.trigger
+              service_data:
+                entity_id: automation.button_trigger_auto
+            styles:
+              icon:
+                - color: >
+                    [[[ return states['input_text.filter_status'].state ===
+                    'auto' ? 'yellow' : 'lightgray'; ]]]
+              card:
+                - padding: 10px 0px 0px 0px
+              name:
+                - padding-top: 10px
+                - padding-bottom: 5px
+          - type: custom:button-card
+            entity: input_boolean.pool_pump_manual
+            icon: mdi:autorenew-off
+            icon_height: 50px
+            name: Manual
+            tap_action:
+              action: call-service
+              service: automation.trigger
+              service_data:
+                entity_id: automation.button_trigger_manual
+            styles:
+              icon:
+                - color: >
+                    [[[ return states['input_text.filter_status'].state ===
+                    'manual' ? 'yellow' : 'lightgray'; ]]]
+              card:
+                - padding: 10px 0px 0px 0px
+              name:
+                - padding-top: 10px
+                - padding-bottom: 5px
+      - type: horizontal-stack
+        cards:
+          - type: custom:time-picker-card
+            entity: input_datetime.pool_pump_start_time_1
+            hour_mode: 12
+            hour_step: 1
+            minute_step: 5
+            layout:
+              hour_mode: single
+              align_controls: center
+              name: header
+              embedded: false
+              thin: true
+            hide:
+              seconds: true
+              name: false
+            name: Start Time 1
+            tap_action:
+              - service: ""
+            link_values: true
+          - type: custom:time-picker-card
+            entity: input_datetime.pool_pump_stop_time_1
+            hour_mode: 12
+            hour_step: 1
+            minute_step: 5
+            layout:
+              hour_mode: single
+              align_controls: center
+              name: header
+              thin: true
+            hide:
+              seconds: true
+            name: Stop Time 1
+            tap_action:
+              - service: ""
+      - type: horizontal-stack
+        cards:
+          - type: custom:time-picker-card
+            entity: input_datetime.pool_pump_start_time_2
+            hour_mode: 12
+            hour_step: 1
+            minute_step: 5
+            layout:
+              hour_mode: single
+              align_controls: center
+              name: header
+              thin: true
+              embedded: false
+            hide:
+              seconds: true
+            name: Start Time 2
+          - type: custom:time-picker-card
+            entity: input_datetime.pool_pump_stop_time_2
+            hour_mode: 12
+            hour_step: 1
+            minute_step: 5
+            layout:
+              hour_mode: single
+              align_controls: center
+              name: header
+              thin: true
+            hide:
+              seconds: true
+            name: Stop Time 2
+      - type: horizontal-stack
+        cards:
+          - type: custom:time-picker-card
+            entity: input_datetime.pool_pump_manual_run_time
+            hour_mode: 24
+            hour_step: 1
+            minute_step: 5
+            layout:
+              hour_mode: single
+              align_controls: center
+              name: header
+              thin: true
+            hide:
+              seconds: true
+          - type: custom:config-template-card
+            entities:
+              - input_boolean.pool_pump_serial_monitor_on_off
+              - input_boolean.pool_pump_auto_countdown_disable
+            card:
+              type: entities
+              card_mod:
+                style: |
+                  ha-card {
+                    display: flex;
+                    flex-direction: column;
+                    flex-grow: 1; /* Allow the card to grow and fill the available height */
+                    height: 100%;
+                    box-sizing: border-box;
+                    #padding: 19px; /* Adjusted padding */
+                  }
+                  .card-content {
+                    flex: 1 1 auto; /* Ensure the content can grow and shrink */
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: flex-start; /* Adjust alignment as needed */
+                  }
+              entities:
+                - type: custom:template-entity-row
+                  entity: input_boolean.pool_pump_auto_countdown_disable
+                  toggle: true
+                  state_color: true
+                  name: >
+                    {% if
+                    is_state('input_boolean.pool_pump_auto_countdown_disable',
+                    'on') %}
+                      Auto (Active)
+                    {% else %}
+                      Auto (Inactive)
+                    {% endif %}
+                  card_mod:
+                    style: |
+                      :host {
+                        --paper-item-icon-color: {% if is_state('input_boolean.pool_pump_auto_countdown_disable', 'on') %} #fdd835 {% else %} #44739e {% endif %};
+                      }
+                - type: custom:template-entity-row
+                  entity: input_boolean.pool_pump_serial_monitor_on_off
+                  toggle: true
+                  state_color: true
+                  name: >
+                    {% if
+                    is_state('input_boolean.pool_pump_serial_monitor_on_off',
+                    'on') %}
+                      Monitor (Active)
+                    {% else %}
+                      Monitor (Inactive)
+                    {% endif %}
+                  card_mod:
+                    style: |
+                      :host {
+                        --paper-item-icon-color: {% if is_state('input_boolean.pool_pump_serial_monitor_on_off', 'on') %} #fdd835 {% else %} #44739e {% endif %};
+                      }
+      - type: custom:config-template-card
+        entities:
+          - sensor.pool_pump_auto_count_down_minutes
+          - sensor.pool_pump_manual_run_time_minutes
+          - sensor.pool_pump_auto_count_down_formatted
+        card:
+          type: custom:bar-card
+          title: Auto Filtration Starts In
+          name: ${states["sensor.pool_pump_auto_count_down_formatted"].state}
+          entity: sensor.pool_pump_auto_count_down_minutes
+          max: ${states["sensor.pool_pump_manual_run_time_minutes"].state}
+          value: "off"
+          positions:
+            icon: "off"
+            indicator: "off"
+            minmax: "off"
+            value: "off"
+          card_mod:
+            style: >
+              /* Targeting both .card-header and :host ::slotted(.card-header)
+              */
+
+              .card-header,
+
+              :host ::slotted(.card-header) {
+                padding: 12px 106px 16px; /* Adjust padding as needed */
+              }
+
+              :host ::slotted(.card-content:not(:first-child)),
+
+              slot:not(:first-child)::slotted(.card-content) {
+                padding-top: -1px; /* Adjust padding top as needed */
+              }       
+
+              ha-card {
+
+                --ha-card-header-font-size: 18px;
+                --ha-card-border-radius: 10px;
+              }
+
+              bar-card-backgroundbar {
+                border-radius: 10px;
+                height: 100%;
+              }
+
+              bar-card-currentbar {
+                border-radius: 10px;
+                height: 100%;
+              }
+
+              parent-container {
+                text-align: center;
+                height: 100%;
+
+              }
+
+              bar-card-header {
+                text-align: center;
+                height: auto;
+              }
+
+              bar-card-title {
+                display: inline-block;
+                font-size: 13px;
+                font-weight: bold;
+                text-shadow: 1px 1px #0005;
+              }
+
+              bar-card-name {
+                display: block;
+                margin: 0 auto;
+                font-size: 13px;
+                font-weight: bold;
+                text-shadow: 1px 1px #0005;
+
+              }
+      - show_name: true
+        show_icon: false
+        type: button
+        tap_action:
+          action: call-service
+          service: mqtt.publish
+          target: {}
+          data:
+            qos: 0
+            retain: false
+            topic: home/commands
+            payload: writetimerstomemory
+        entity: input_boolean.pool_timers_commit_to_memory
+        name: Commit Pool Times to Memory
+        show_state: true
+    layout_type: custom:grid-layout
+  - type: custom:config-template-card
+    entities:
+      - sensor.pool_pump_auto_count_down_minutes
+      - sensor.pool_pump_manual_run_time_minutes
+      - sensor.pool_pump_auto_count_down_formatted
+    card:
+      type: custom:bar-card
+      title: Time Until Auto
+      name: ${states["sensor.pool_pump_auto_count_down_formatted"].state}
+      entity: sensor.pool_pump_auto_count_down_minutes
+      max: ${states["sensor.pool_pump_manual_run_time_minutes"].state}
+      value: "off"
+      positions:
+        icon: "off"
+        indicator: "off"
+        minmax: "off"
+        value: "off"
+      card_mod:
+        style: |
+
+          ha-card {
+            padding: 20px 10px 10px 5px; /* Adjust the padding values as needed */
+          }
+          .card-content {
+            padding: 20px 10px 10px 5px; /* Adjust the padding values as needed */
+          }
+
+
+          bar-card-backgroundbar {
+            border-radius: 10px;
+          }
+          bar-card-currentbar {
+            border-radius: 10px;
+          }
+          parent-container {
+            text-align: center;
+          }
+
+          bar-card-title {
+            display: inline-block;
+            font-size: 13px;
+            font-weight: bold;
+            text-shadow: 1px 1px #0005;
+          }
+          bar-card-name {
+            display: block;
+            margin: 0 auto;
+            font-size: 13px;
+            font-weight: bold;
+            text-shadow: 1px 1px #0005;
+          }
+          ha-card {
+            --ha-card-header-font-size: 18px;
+            --ha-card-border-radius: 10px;
+            
+          }
+top_margin: false
+dense_section_placement: true
+header:
+  card:
+    type: markdown
+    content: |-
+      # Pool Filter Control Panel 
+      Pool pump control for automatic and manual speed ✨
+    text_only: true
+    card_mod:
+      style: |
+        ha-markdown h1 {
+          margin-top: 0px !important;
+        }
+        ha-markdown {
+          padding-top: 4px !important;
+          padding-bottom: 4px !important;
+        }
+  layout: center
+  badges_position: bottom
+  badges_wrap: wrap
+
