@@ -1,1 +1,489 @@
-﻿# Home Assistant automation rules placeholder
+﻿- alias: Test Clock
+  trigger:
+    platform: state
+    entity_id: input_boolean.test_clock
+    to: 'on'
+  condition: []
+  action:
+  - delay: 5.0
+  - service: input_boolean.turn_off
+    entity_id: input_boolean.test_clock
+  id: a885994f6190423eb45c0dff39477e04
+- id: '1700247782487'
+  alias: Stockings Off
+  description: ''
+  trigger:
+  - platform: time
+    at: '22:00:00'
+  condition: []
+  action:
+  - type: turn_off
+    device_id: d522dc1ef2dfba486b1861b9b7a074e1
+    entity_id: 5b96df8bb2e9b39c4d991cda12352067
+    domain: switch
+  mode: single
+- id: '1700248517723'
+  alias: Turn on Christmas Scene
+  description: ''
+  trigger:
+  - platform: sun
+    event: sunset
+    offset: -00:30:00
+  condition: []
+  action:
+  - type: turn_on
+    device_id: 6ffc274787142444edd1948421f55357
+    entity_id: 52483bf5e1bab5084bccbc8fdf13119d
+    domain: switch
+  mode: single
+- id: '1700248560840'
+  alias: Turn off Christmas Scene
+  description: ''
+  trigger:
+  - platform: time
+    at: '22:00:00'
+  condition: []
+  action:
+  - type: turn_off
+    device_id: 6ffc274787142444edd1948421f55357
+    entity_id: 52483bf5e1bab5084bccbc8fdf13119d
+    domain: switch
+  mode: single
+- id: '1700249152447'
+  alias: Christmas Tree Off
+  description: ''
+  trigger:
+  - platform: time
+    at: '22:00:00'
+  condition: []
+  action:
+  - type: turn_off
+    device_id: 3052b2a8ce56d484474236e886d0afe8
+    entity_id: 579c90b65fce3fb26dc88e5943619259
+    domain: switch
+  mode: single
+- id: '1700249434033'
+  alias: Turn on Christmas Village
+  description: ''
+  trigger: []
+  condition: []
+  action: []
+  mode: single
+- id: '1700249788006'
+  alias: Turn off Christmas Village
+  description: ''
+  trigger: []
+  condition: []
+  action: []
+  mode: single
+- id: '1701043814025'
+  alias: Turn off Christmas Plug 2
+  description: ''
+  trigger:
+  - platform: time
+    at: '22:00:00'
+  condition: []
+  action:
+  - type: turn_off
+    device_id: 0e60eb0cf93a786025a7d6aaa3aa1d24
+    entity_id: e046e2ad2f8cccb13493329be0b9e029
+    domain: switch
+  mode: single
+- id: '1701043938846'
+  alias: Turn off Christmas Plug 3
+  description: ''
+  trigger:
+  - platform: time
+    at: '22:00:00'
+  condition: []
+  action:
+  - type: turn_off
+    device_id: 7ea46ffe1365e88102d0ec5c6c2869d7
+    entity_id: 6c9fd30e2ca23b365af4bf09152b5a4c
+    domain: switch
+  mode: single
+- id: '1701296066748'
+  alias: ' Turn off Christmas Village'
+  description: ''
+  trigger:
+  - platform: time
+    at: '22:00:00'
+  condition: []
+  action:
+  - type: turn_off
+    device_id: 04734bba4fe778c7aa054cdfaa2514af
+    entity_id: bb8bd29810c3949830577938890b3e82
+    domain: switch
+  mode: single
+- id: '1701573648746'
+  alias: ' Turn off Christmas Plug 4'
+  description: ''
+  trigger:
+  - platform: time
+    at: '22:00:00'
+  condition: []
+  action:
+  - type: turn_off
+    device_id: 2644866710501aba337e50e2e0e800fc
+    entity_id: 6b260e2ea5b57adb94de7eaa60fcc350
+    domain: switch
+  mode: single
+- id: '1701837911975'
+  alias: 'Turn off Garage light '
+  description: ''
+  trigger:
+  - platform: time
+    at: '22:00:00'
+  condition: []
+  action:
+  - type: turn_off
+    device_id: 5ae9e9c97e08f5e43edc775275eea71a
+    entity_id: 6ef754cd87f66bd9d70c6e280015ab82
+    domain: switch
+  mode: single
+- id: '1702516587957'
+  alias: New automation
+  description: ''
+  trigger:
+  - platform: time
+    at: 00:00:00
+  condition: []
+  action:
+  - type: turn_off
+    device_id: b472dc4b65d68129e1aa41780efa4f68
+    entity_id: 4158d2e996c1ed70709955f3af398d19
+    domain: switch
+  mode: single
+- alias: Update Filter Status Helper
+  trigger:
+  - platform: state
+    entity_id: sensor.filterstatus
+  action:
+  - service: input_text.set_value
+    target:
+      entity_id: input_text.filter_status
+    data:
+      value: '{{ states(''sensor.filterstatus'') }}'
+  id: 57e839e4b19e4ea7aa395f0ceac97895
+- alias: Update Filter Command Helper
+  trigger:
+  - platform: state
+    entity_id: sensor.filtercommand
+  action:
+  - service: input_text.set_value
+    target:
+      entity_id: input_text.filter_command
+    data:
+      value: '{{ states(''sensor.filtercommand'') }}'
+  id: b202b7d5999a4f45854f5822fe480546
+- alias: Update Filter HighLow Helper
+  trigger:
+  - platform: state
+    entity_id: sensor.filterhighlow
+  action:
+  - service: input_text.set_value
+    target:
+      entity_id: input_text.filter_highlow
+    data:
+      value: '{{ states(''sensor.filterhighlow'') }}'
+  id: be3931368bc34b35888fd413545d4edb
+- alias: Publish Pool Pump Serial Monitor Status
+  trigger:
+    platform: state
+    entity_id: input_boolean.pool_pump_serial_monitor_on_off
+  action:
+  - service: mqtt.publish
+    data_template:
+      topic: home/commands
+      payload: '{{ states(''input_boolean.pool_pump_serial_monitor_on_off'') }},pool_pump_serial_monitor'
+  id: a54ebec77c804f97b7a94a15852d3e4a
+- id: button_trigger_auto
+  alias: Button Trigger Auto
+  trigger:
+    platform: event
+    event_type: call_service
+    event_data:
+      domain: homeassistant
+      service: automation.trigger
+      service_data:
+        entity_id: automation.mqtt_publish_auto
+  action:
+  - service: mqtt.publish
+    data:
+      topic: home/commands
+      payload: auto
+      qos: 0
+      retain: false
+- id: button_trigger_manual
+  alias: Button Trigger Manual
+  trigger:
+    platform: event
+    event_type: call_service
+    event_data:
+      domain: homeassistant
+      service: automation.trigger
+      service_data:
+        entity_id: automation.mqtt_publish_manual
+  action:
+  - service: mqtt.publish
+    data:
+      topic: home/commands
+      payload: manual
+      qos: 0
+      retain: false
+- id: button_trigger_run
+  alias: Button Trigger Run
+  trigger:
+    platform: event
+    event_type: call_service
+    event_data:
+      domain: homeassistant
+      service: automation.trigger
+      service_data:
+        entity_id: automation.mqtt_publish_run
+  action:
+  - service: mqtt.publish
+    data:
+      topic: home/commands
+      payload: start
+      qos: 0
+      retain: false
+- id: button_trigger_start
+  alias: Button Trigger Start
+  trigger:
+    platform: event
+    event_type: call_service
+    event_data:
+      domain: automation
+      service: trigger
+      service_data:
+        entity_id: automation.button_trigger_start
+  action:
+  - service: mqtt.publish
+    data:
+      topic: home/commands
+      payload: start
+      qos: 0
+      retain: false
+- id: button_trigger_stop
+  alias: Button Trigger Stop
+  trigger:
+    platform: event
+    event_type: call_service
+    event_data:
+      domain: homeassistant
+      service: automation.trigger
+      service_data:
+        entity_id: automation.mqtt_publish_stop
+  action:
+  - service: mqtt.publish
+    data:
+      topic: home/commands
+      payload: stop
+      qos: 0
+      retain: false
+- id: button_trigger_high
+  alias: Button Trigger High
+  trigger:
+    platform: event
+    event_type: call_service
+    event_data:
+      domain: homeassistant
+      service: automation.trigger
+      service_data:
+        entity_id: automation.mqtt_publish_high
+  action:
+  - service: mqtt.publish
+    data:
+      topic: home/commands
+      payload: high
+      qos: 0
+      retain: false
+- id: button_trigger_low
+  alias: Button Trigger Low
+  trigger:
+    platform: event
+    event_type: call_service
+    event_data:
+      domain: homeassistant
+      service: automation.trigger
+      service_data:
+        entity_id: automation.mqtt_publish_low
+  action:
+  - service: mqtt.publish
+    data:
+      topic: home/commands
+      payload: low
+      qos: 0
+      retain: false
+- alias: Publish Pool Pump Start Time 1 to MQTT
+  trigger:
+  - platform: state
+    entity_id: input_datetime.pool_pump_start_time_1
+  action:
+  - service: mqtt.publish
+    data:
+      topic: home/commands
+      payload: '{{ states(''input_datetime.pool_pump_start_time_1'') }},start_time_1'
+  id: d75338529ab9431590b85b23f85ce2a9
+- alias: Publish Pool Pump Stop Time 1 to MQTT
+  trigger:
+  - platform: state
+    entity_id: input_datetime.pool_pump_stop_time_1
+  action:
+  - service: mqtt.publish
+    data:
+      topic: home/commands
+      payload: '{{ states(''input_datetime.pool_pump_stop_time_1'') }},stop_time_1'
+  id: 2dd458d841d04548bfbe5fe8ec0521ee
+- alias: Publish Pool Pump Start Time 2 to MQTT
+  trigger:
+  - platform: state
+    entity_id: input_datetime.pool_pump_start_time_2
+  action:
+  - service: mqtt.publish
+    data:
+      topic: home/commands
+      payload: '{{ states(''input_datetime.pool_pump_start_time_2'') }},start_time_2'
+  id: 3b95c4c64607452f89920c56e1e052c7
+- alias: Publish Pool Pump Stop Time 2 to MQTT
+  trigger:
+  - platform: state
+    entity_id: input_datetime.pool_pump_stop_time_2
+  action:
+  - service: mqtt.publish
+    data:
+      topic: home/commands
+      payload: '{{ states(''input_datetime.pool_pump_stop_time_2'') }},stop_time_2'
+  id: 1e9089e807e148d8a9870b3bbc147da3
+- alias: Publish Pool Manual Run Time to MQTT
+  trigger:
+  - platform: state
+    entity_id: input_datetime.pool_pump_manual_run_time
+  action:
+  - service: mqtt.publish
+    data:
+      topic: home/commands
+      payload: '{{ states(''input_datetime.pool_pump_manual_run_time'') }},manual_run_time'
+  id: 54ad1d80ba78426e9aa78463bf7b486d
+- alias: Update Pool Pump Start Time 1
+  trigger:
+  - platform: mqtt
+    topic: home/pool_pump/start_time_1
+  action:
+  - service: input_datetime.set_datetime
+    target:
+      entity_id: input_datetime.pool_pump_start_time_1
+    data:
+      time: '{{ trigger.payload }}'
+  id: 1d17895be721410587b94e57557e56f6
+- alias: Update Pool Pump Stop Time 1
+  trigger:
+  - platform: mqtt
+    topic: home/pool_pump/stop_time_1
+  action:
+  - service: input_datetime.set_datetime
+    target:
+      entity_id: input_datetime.pool_pump_stop_time_1
+    data:
+      time: '{{ trigger.payload }}'
+  id: baeb6e3657ad4ab186d1291495da5904
+- alias: Update Pool Pump Start Time 2
+  trigger:
+  - platform: mqtt
+    topic: home/pool_pump/start_time_2
+  action:
+  - service: input_datetime.set_datetime
+    target:
+      entity_id: input_datetime.pool_pump_start_time_2
+    data:
+      time: '{{ trigger.payload }}'
+  id: 68795a3a9c8c42018fe6cec0ca53d9fc
+- alias: Update Pool Pump Stop Time 2
+  trigger:
+  - platform: mqtt
+    topic: home/pool_pump/stop_time_2
+  action:
+  - service: input_datetime.set_datetime
+    target:
+      entity_id: input_datetime.pool_pump_stop_time_2
+    data:
+      time: '{{ trigger.payload }}'
+  id: 68138cb94837445b92d693af10e6daa3
+- id: be276b2e34474a7396d7bf87e847a9b2
+  alias: Update Pool Pump Manual run Time
+  triggers:
+  - topic: home/pool_pump/manual_run_time
+    trigger: mqtt
+  actions:
+  - target:
+      entity_id: input_datetime.pool_pump_manual_run_time
+    data:
+      time: '{{ trigger.payload }}'
+    action: input_datetime.set_datetime
+  - action: input_text.set_value
+    data: {}
+- id: 6c58d73fe38c43b08a300dff503e6ba3
+  alias: Update Pool Pump Manual run Time
+  triggers:
+  - topic: home/sensor/timer/countdown
+    trigger: mqtt
+  actions:
+  - action: input_text.set_value
+    metadata: {}
+    data:
+      value: '{{ trigger.payload }}'
+    target:
+      entity_id: input_text.countdown_timer_as_text
+  - target:
+      entity_id: input_datetime.pool_pump_auto_count_down
+    data:
+      time: '{{ trigger.payload }}'
+    action: input_datetime.set_datetime
+- id: '1750258697650'
+  alias: Pool Pump Read and Publish Disable Auto Toggle
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id:
+    - input_boolean.pool_pump_auto_countdown_disable
+  conditions: []
+  actions:
+  - action: mqtt.publish
+    metadata: {}
+    data:
+      evaluate_payload: false
+      qos: 0
+      retain: false
+      payload: 'AutoDisableStatus: {{ states(''input_boolean.pool_pump_auto_countdown_disable'')
+        }}'
+      topic: home/commands
+  mode: single
+- id: '1750285177166'
+  alias: Sync Auto Countdown Disable Boolean with Countdown Text Validity
+  trigger:
+    - platform: state
+      entity_id: input_text.countdown_timer_as_text
+  action:
+    - choose:
+        - conditions:
+            - condition: template
+              value_template: >
+                {% set raw = states('input_text.countdown_timer_as_text') %}
+                {% if ':' in raw %}
+                  {% set parts = raw.split(':') %}
+                  {{ parts | length != 2 or not parts[0].isdigit() or not parts[1].isdigit() }}
+                {% elif ' ' in raw %}
+                  false
+                {% else %}
+                  true
+                {% endif %}
+          sequence:
+            - service: input_boolean.turn_on
+              target:
+                entity_id: input_boolean.pool_pump_auto_countdown_disable
+      default:
+        - service: input_boolean.turn_off
+          target:
+            entity_id: input_boolean.pool_pump_auto_countdown_disable
+  mode: single
