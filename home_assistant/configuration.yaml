@@ -1,1 +1,409 @@
-﻿# Home Assistant main config (MQTT, sensors, switches) placeholder
+﻿homeassistant:
+  name: Home
+  latitude: 41.262667
+  longitude: -81.864715
+  #unit_system: imperial
+  time_zone: America/New_York
+#  packages: !include_dir_named packages # package setup
+# Example configuration.yaml entry
+
+light:
+  - platform: template
+    lights:
+      motion_alarm_on_off:
+        friendly_name: "Motion Alarm On/Off"
+        turn_on:
+          - service: light.turn_on
+            entity_id: light.motion_alarm_on_off
+        turn_off:
+        set_level:
+#  - platform: mqtt
+#    name: "Any name you like"
+#    state_topic: "shellies/shelly1-8CAAB56E7B3E/relay/0"
+#    command_topic: "shellies/shelly1-8CAAB56E7B3E/relay/0/command"
+#    payload_on: "on"
+#    payload_off: "off"
+#    retain: false    
+stream:
+camera:
+- platform: ffmpeg
+  name: Camera
+  input: rtsp://192.168.1.31:554/11
+  extra_arguments: -s 720×480
+- platform: ffmpeg
+  name: Camera2
+  input: rtsp://192.168.1.59/0/av0  
+- platform: ffmpeg
+  name: Camera3
+  input: rtsp://192.168.1.31:554/11
+climate:
+# Example configuration.yaml entry
+#  - platform: honeywell
+#    username: kesson1029@hotmail.com
+#    password: teetreeoil123Q!
+# Example configuration.yaml entry
+
+
+
+vacuum:
+#  - platform: roomba
+#    name: Living room
+#    host: 192.168.1.115
+#  - platform: template
+#    sensors:
+#    vacuum_status:
+#    value_template: ‘{{ states.vacuum.roomba.attributes.status }}’ 
+frontend:
+  themes: !include_dir_merge_named themes
+# Configure a default setup of Home Assistant (frontend, api, etc)
+default_config:
+
+# Text to speech
+#tts:
+#  - platform: google_translate
+#    cache: true
+#    cache_dir: /tmp/tts
+#    time_memory: 57000 
+#    base_url: http://192.168.1.94:8123
+#    service_name: google_say
+
+group: !include groups.yaml
+automation: !include automations.yaml
+
+script: !include scripts.yaml
+scene: !include scenes.yaml
+sensor:
+
+  - platform: template
+    sensors:
+      monitor_status:
+        value_template: >
+          {% if is_state('input_boolean.pool_pump_serial_monitor_on_off', 'on') %}
+            Monitor (Active)
+          {% else %}
+            Monitor (Inactive)
+          {% endif %}
+          
+  - platform: template
+    sensors:
+      monitor_state:
+        friendly_name: "Monitor State"
+        value_template: >
+          {% if is_state('input_boolean.pool_pump_serial_monitor_on_off', 'on') %}
+            On
+          {% else %}
+            Off
+          {% endif %}
+          
+  - platform: template
+    sensors:
+      pool_pump_auto_count_down_formatted:
+        friendly_name: "Pool Pump Auto Countdown Formatted"
+        value_template: >
+          {% set raw = states('input_text.countdown_timer_as_text') %}
+          {% if ':' in raw %}
+            {% set parts = raw.split(':') %}
+            {% set part0 = parts[0] | int %}
+            {% set part1 = parts[1] | int %}
+            {{ '{:02d}:{:02d}'.format(part0, part1) }}
+          {% else %}
+            {{ raw }}
+          {% endif %}
+        
+#          {% set time_parts = states('input_text.countdown_timer_as_text').split(':') %}
+#          {{ time_parts[0] | int }}:{{ time_parts[1] }}
+#          {% set time_parts = states('input_datetime.pool_pump_auto_count_down').split(':') %}
+#          {{ time_parts[0] | int }}:{{ time_parts[1] }}
+          
+  - platform: template
+    sensors:
+      pool_pump_manual_run_time_minutes:
+        friendly_name: "Pool Pump Manual Run Time (Minutes)"
+        value_template: >
+          {% set time = states('input_datetime.pool_pump_manual_run_time') %}
+          {% set hours = time[:2] | int %}
+          {% set minutes = time[3:5] | int %}
+          {% set total_minutes = (hours * 60) + minutes %}
+          {{ total_minutes }}
+        unit_of_measurement: 'int'
+
+      pool_pump_auto_count_down_minutes:
+        friendly_name: "Pool Pump Auto Count Down (Minutes)"
+        value_template: >
+          {% set time = states('input_datetime.pool_pump_auto_count_down') %}
+          {% set hours = time[:2] | int %}
+          {% set minutes = time[3:5] | int %}
+          {% set total_minutes = (hours * 60) + minutes %}
+          {{ total_minutes }}
+        unit_of_measurement: 'int'
+
+
+        
+  - platform: template
+    sensors:
+      pool_pump_state_display:
+        friendly_name_template: >
+          {% if is_state('binary_sensor.pool_pump_active', 'off') %}
+            Off
+          {% else %}
+            On
+          {% endif %}
+        value_template: >
+          {% if is_state('binary_sensor.pool_pump_active', 'off') %}
+            Off
+          {% else %}
+            On
+          {% endif %}
+          
+      pool_pump_automan_display:
+        friendly_name_template: >
+          {% if is_state('input_text.filter_status', 'auto') %}
+            Auto
+          {% else %}
+            Manual
+          {% endif %}
+        value_template: >
+          {% if is_state('input_text.filter_status', 'auto') %}
+            Auto
+          {% else %}
+            Manual
+          {% endif %}
+         
+          
+  - platform: template
+    sensors:
+      pool_pump_start_time_1_24h:
+        value_template: "{{ states('input_datetime.pool_pump_auto_count_down')[:5] }}"
+
+  - platform: template
+    sensors:
+      pool_pump_manual_run_time_total_minutes:
+        value_template: >
+          {% set hours = state_attr('input_datetime.pool_pump_manual_run_time', 'hour') %}
+          {% set minutes = state_attr('input_datetime.pool_pump_manual_run_time', 'minute') %}
+          {{ (hours * 60) + minutes }}
+          
+  - platform: template
+    sensors:
+      countdown_time_total_minutes:
+        value_template: >
+          {% set time_str = states('sensor.pool_pump_start_time_1_24h') %}
+          {% set hours, minutes = time_str.split(':') %}
+          {{ (hours | int * 60) + (minutes | int) }}
+          
+  - platform: template
+    sensors:
+      countdown_time_hours_minutes:
+        friendly_name: 'Countdown Time (Hours:Minutes)'
+        value_template: >
+          {% set minutes = states('sensor.countdown_time_total_minutes') | int %}
+          {% set hours = minutes // 60 %}
+          {% set minutes_remainder = minutes % 60 %}
+          {% if minutes_remainder < 10 %}
+            {{ '{}:0{}'.format(hours, minutes_remainder) }}
+          {% else %}
+            {{ '{}:{}'.format(hours, minutes_remainder) }}
+          {% endif %}
+          
+
+  - platform: template
+    sensors:
+      filter_status_color:
+        friendly_name: "Filter Status Color"
+        value_template: >
+          {% if states('input_text.filter_status') == 'auto' %}
+            yellow
+          {% else %}
+            grey
+          {% endif %}
+  - platform: template
+    sensors:
+      bin_present:
+        friendly_name: "Bin Present"
+        unit_of_measurement: ''
+        value_template: >-
+          {% if state_attr('vacuum.roomba', 'bin_present')==true %}
+          Yes
+          {% elif state_attr('vacuum.roomba', 'bin_present')==false %}
+          No
+          {% else %}
+          Unknown
+          {% endif %}
+       # value_template: "{{ state_attr('vacuum.roomba', 'bin_present') }}"
+      bin_full:
+        friendly_name: "Bin Full"
+        unit_of_measurement: ''
+        #value_template: "{{ state_attr('vacuum.roomba', 'bin_full') }}"
+        value_template: >-
+          {% if  state_attr('vacuum.roomba', 'bin_full')==true %}
+          Yes
+          {% elif state_attr('vacuum.roomba', 'bin_full')==false %}
+          No
+          {% else %}
+          Unknown
+          {% endif %}
+  - platform: template
+    sensors:
+        tickers:
+          friendly_name: Tickers
+          value_template: "{{ states('sensor.steam1234') in ('online', 'away') }}"
+          attribute_templates:
+            data1: "me"
+            data: >
+              {% set test1 = {
+                "key1" : "value1",
+                "key2" : "value2",
+                "key3" : "value3",
+                "key4" : "value4",
+                "key5" : "value5"
+              }
+              %}
+              {{ [test1] }}
+  - platform: time_date
+    display_options:
+      - 'date_time'
+      - 'time'
+      - 'date'
+      - 'date_time'
+      - 'date_time_utc'
+      - 'date_time_iso'
+      - 'time_date'
+      - 'time_utc'
+  - platform: rest
+    resource: https://api.weather.gov/alerts/active/count
+    name: NWS Alert Count
+    value_template: >
+      {% if value_json.zones.OHZ020 is defined %}
+        {{ value_json.zones.OHZ020 }}
+      {% elif value_json.zones.OHZ020 is defined %}
+        {{ value_json.zones.OHZ020 }}
+      {% else %}
+        0
+      {% endif %}
+    #json_attributes:
+    #  - event
+    #  - description
+    #  - instructions
+    #  - expires
+    headers:
+      User-Agent: Homeassistant
+      Accept: application/ld+json
+    scan_interval: 60
+    
+  - platform: rest
+    resource: https://api.weather.gov/alerts/active?zone=OHZ020 #,INC033
+    name: NWS Alert Event
+    value_template: >
+      {% if value_json.features[0] is defined %}
+        {{ value_json['features'][0]['properties'].event }}
+      {% else %}
+        None
+      {% endif %}
+    json_attributes:
+      - features
+    #  - description
+    #  - instructions
+    #  - expires
+    headers:
+      User-Agent: Homeassistant
+      Accept: application/geo+json
+    scan_interval: 60
+    
+  - platform: mqtt
+    name: "Countdown Timer"
+    state_topic: "home/sensor/timer/countdown"
+    unit_of_measurement: "seconds"
+
+  - platform: mqtt
+    name: "Display Text"
+    state_topic: "home/display/text"
+    
+switch:
+  - platform: template
+    switches:
+      garage:
+        value_template: "{{ is_state('cover.garage_door_msg100_main_channel', 'open') }}"
+        turn_on:
+          service: homeassistant.toggle
+          data:
+            entity_id: cover.garage_door_msg100_main_channel
+        turn_off:
+          service: homeassistant.toggle
+          data:
+            entity_id: cover.garage_door_msg100_main_channel
+        icon_template: >-
+          {% if is_state('cover.garage_door_msg100_main_channel', 'open') %}
+            mdi:garage-open
+          {% else %}
+            mdi:garage
+          {% endif %}
+
+input_boolean:
+  track_front_door_motion:
+    name: Track Front Door Motion
+    initial: on
+    icon: mdi:alarm-light
+
+  toggle_led:
+    name: Toggle LED
+
+
+mobile_app:
+#discovery:
+sonoff:
+  username: cesson1029@hotmail.com
+  password: teetreeoil123Q!
+  scan_interval: 60 #(optional, lower values than 60 won't work anymore!)
+  grace_period: 600 #(optional)
+  api_region: 'eu' #(optional)
+  entity_prefix: True #(optional)
+  debug: False #(optional)
+# media_player:
+# - platform: cast  
+
+
+logger:
+  default: info
+  logs:
+    custom_components.meross_cloud: info
+    custom_components.tuya_v2: debug    
+    homeassistant.components.mqtt: debug
+    homeassistant.components.automation: debug
+telegram_bot:
+  - platform: webhooks
+    api_key: 5621208929:AAH8IBSb56k5YoG90WpGrFvpAVIiw9DE3Cc
+    url: https://kesson1029.freeddns.org:80
+    allowed_chat_ids:
+      - 5748520573
+http:
+  #ssl_certificate: /ssl/fullchain.pem
+  #ssl_key: /ssl/privkey.pem
+  
+# Defining & Customizing Shelly Switches via MQTT in Home Assistant
+  # Kitchen Downlights (111673)
+
+
+
+
+# Example configuration.yaml entry
+mqtt:
+  sensor:
+    - name: "filterStatus"
+      state_topic: "home/sensor/filterStatus"
+    - name: "filterCommand"
+      state_topic: "home/sensor/filterCommand"
+    - name: "filterHighLow"
+      state_topic: "home/sensor/filterHighLow"
+
+binary_sensor:
+  - platform: template
+    sensors:
+      pool_pump_active:
+        value_template: "{{ states('input_text.filter_command') in ['run', 'start'] }}"
+        friendly_name: "Pool Pump Active"
+
+media_player:
+  - platform: vlc
+  
+
+
