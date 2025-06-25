@@ -396,9 +396,9 @@ sections:
                     {% if
                     is_state('input_boolean.pool_pump_serial_monitor_on_off',
                     'on') %}
-                      Monitor (Active)
-                    {% else %}
                       Monitor (Inactive)
+                    {% else %}
+                      Monitor (Active)
                     {% endif %}
                   card_mod:
                     style: |
@@ -943,4 +943,3 @@ header:
   layout: center
   badges_position: bottom
   badges_wrap: wrap
-

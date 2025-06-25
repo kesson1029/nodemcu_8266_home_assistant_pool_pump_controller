@@ -26,7 +26,7 @@ unsigned long previousMillis2 = 0; // Store the last time the LED was turned on
 unsigned long previousMillisTimerCheck = 0;
 bool ledOn = false;           // Store the current LED state
 bool HAinControl = false;
-bool pool_pump_serial_monitor = true;
+bool pool_pump_serial_monitor = false;
 
 long intervalLedFlash = 200;  // Interval at which to blink (milliseconds)
 unsigned long previousMillis = 0;  // Will store the last time LED was updated
@@ -196,10 +196,14 @@ void setup() {
     html += "  output.scrollTop = output.scrollHeight;";
     html += "}";
     html += "setInterval(function(){";
-    html += "  fetch('/serial').then(response => response.text()).then(data => {";
-    html += "    document.getElementById('output').innerHTML += data;";
-    html += "    scrollToBottom();";  // Scroll to bottom after adding new data
-    html += "  });";
+html += "  fetch('/serial').then(response => response.text()).then(data => {";
+html += "    if (data.startsWith('[CLEAR]')) {";
+html += "      document.getElementById('output').innerHTML = data.substring(7);";
+html += "    } else {";
+html += "      document.getElementById('output').innerHTML += data;";
+html += "    }";
+html += "    scrollToBottom();";
+html += "  });";
     html += "}, 1000);";
     html += "</script></body></html>";
     request->send(200, "text/html", html);
@@ -456,16 +460,16 @@ void callback(char* topic, byte* payload, unsigned int length) {
       if (commaPos != -1) {
         firstPart = message.substring(0, commaPos);
         secondPart = message.substring(commaPos + 1);
-        printlnEx(firstPart);
-        printlnEx(secondPart);
+        //printlnEx(firstPart);
+        //printlnEx(secondPart);
         if(firstPart == "on" ){
-          printlnEx("Serial Monitor On");
+          printlnEx("Serial Monitor Off");
           pool_pump_serial_monitor = true;
         }
         if(firstPart == "off" ){
           serialOutput = "";
           output = "";
-          printlnEx("Serial Monitor Off");
+          printlnEx("Serial Monitor On");
           pool_pump_serial_monitor = false;
          
         }        
@@ -1086,32 +1090,49 @@ void readFromEEPROM(long &starttime1, long &stoptime1, long &starttime2, long &s
 
   delay(5000); 
 }
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Custom function to handle Serial print without newline and store in serialOutput
 void printEx(const String &message) {
+  if(pool_pump_serial_monitor == true) {
+    return;
+  }  
   Serial.print(message);    // Print to Serial Monitor without newline
   serialOutput += message;  // Store in serialOutput
   truncateSerialOutput(3000);
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Custom function to handle Serial print with newline and store in serialOutput
 void printlnEx(const String &message) {
-  Serial.println(message);    // Print to Serial Monitor with newline
-  serialOutput += message;    // Store in serialOutput
-  serialOutput += "\n";       // Append newline to serialOutput
+  if (pool_pump_serial_monitor == true) {  // Monitor is OFF
+    Serial.println("Serial monitor disabled");
+    serialOutput = "[CLEAR]<span style='font-size:1.5em;'><b>Serial monitor disabled</b></span>\n";
+    return;
+  }
+  // Monitor is ON
+  Serial.println(message);
+  serialOutput += message + "\n";
   truncateSerialOutput(3000);
-  
-  //Serial.println(serialOutput.length()); 
 }
 
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
 // Overloaded functions for different data types
 void printEx(int value) {
+  if(pool_pump_serial_monitor == true) {
+    return;
+  }   
   Serial.print(value);    // Print to Serial Monitor without newline
   serialOutput += String(value);    // Store in serialOutput
   truncateSerialOutput(3000);
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////
 void printlnEx(int value, int formatMode) {
+  if(pool_pump_serial_monitor == true) {
+    return;
+  }   
   String formatted;
   String htmlFormatted;
 
