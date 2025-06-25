@@ -7,7 +7,7 @@
 //#include <Arduino.h>
 #include <NTPClient.h>
 #include <WiFiUdp.h>
-
+#include <ESP8266mDNS.h>
 //#include <ArduinoJson.h>
 
 AsyncWebServer server(80);  // Declare server globally
@@ -53,11 +53,12 @@ const long utcOffsetInSeconds = -14400; // Adjust this to your local timezone
 NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetInSeconds, 600000);
 
 unsigned long lastNtpUpdate = 0;
-const unsigned long ntpUpdateInterval = 60000;  // Update every 10 minutes
+const unsigned long ntpUpdateInterval = 600000;  // Update every 10 minutes
+
 unsigned long lastEpochTime = 0;
 unsigned long lastMillis = 0;
 unsigned long lastPrintTime = 0;
-const unsigned long printInterval = 5000;  // Print every 5 seconds
+const unsigned long printInterval = 10000;  // Print every 10 seconds
 const unsigned long intervalTimerCheck = 10000; // 10 seconds
 int countdownHours = 2;
 int test2 = 2;
@@ -92,17 +93,17 @@ unsigned long transitionCount = 0;
 int previousStateInput = LOW;
 int debouncedState = LOW; // <== Use this in the rest of your code
 unsigned long lastDebounceTime = 0;
-const unsigned long debounceDelay = 100;
+const unsigned long debounceDelay = 200; // Anti bouncd delay for input switch
 int transitionCountInput = 0;
 
 unsigned long lastLowDuration = 0;
 unsigned long lastLongLowDuration = 0; 
 
-const int inputPin = 4;  // D2 (GPIO 4)
-const int outputLowPin = 14;  // D5 (GPIO 14)
-const int outputHighPin = 12; // D6 (GPIO 12)
-const int powerKillPin = 13;  // D7 (GPIO 13)
-const int Relay_4 = 5;      // D1 (GPIO 5)
+const int inputPin = 4;  // D2 (GPIO 4) External control sw.
+const int outputLowPin = 14;  // D5 (GPIO 14) Low speed relay
+const int outputHighPin = 12; // D6 (GPIO 12) High speed relay
+const int powerKillPin = 13;  // D7 (GPIO 13) VFD master kill relay, 60 second delay
+const int Relay_4 = 5;      // D1 (GPIO 5) Indicating relay, no
 
 // Mode and State Variables
 bool isLowSpeed = false;
@@ -124,10 +125,10 @@ unsigned long currentInputState_lastInputState_Count = 0;
 //RTC_DS3231 rtc;  // Initialize RTC object
 
 // Define the timer values (in 24-hour format)
-int start_time_1 = 1200;
-int stop_time_1 = 1300;
-int start_time_2 = 800;
-int stop_time_2 = 1700;
+int start_time_1 = 1000;
+int stop_time_1 = 1600;
+int start_time_2 = 2200;
+int stop_time_2 = 400;
 
 // Define variables to indicate if the timers are active
 bool timerOneActive = false;
@@ -140,7 +141,10 @@ unsigned long lastMsg = 0;
 int counter = 0;
 
 unsigned long lastPublishTime = 0;   // global variable to store last publish time
-const unsigned long publishInterval = 10000;  // 10 seconds in milliseconds
+const unsigned long publishInterval = 10000;  // 5 seconds in milliseconds
+
+void printlnEx(const String &message);
+void printlnEx(int value, int formatMode = 0);
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -519,6 +523,8 @@ void reconnect() {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Call this to print the log
 void printEventLog() {
+  if (eventIndex == 0) return;  // Skip if no events logged
+
   printlnEx("Logged Timestamps:");
   for (int i = 0; i < eventIndex; i++) {
     printEx("Event ");
@@ -594,6 +600,7 @@ void loop() {
      printEx("timeClient.update Failed : ");
      lastNtpUpdate = currentMillis3; 
     }
+    printlnEx(" "); 
   }
   
   // Read the current state of the input pin
@@ -687,10 +694,20 @@ void loop() {
     } else {
       printEx("Offline time (HHMM): ");
     }
-    printlnEx(timeInt);
+    printlnEx(timeInt, true);
     printlnEx(" ");
     printEx("WiFi.status : ");
-    printlnEx(wfs);
+    printEx(String(wfs) + " : ");
+    switch (wfs) {
+      case WL_IDLE_STATUS:     printlnEx("<b>Idle</b>"); break;
+      case WL_NO_SSID_AVAIL:   printlnEx("<b>No SSID Available</b>"); break;
+      case WL_SCAN_COMPLETED:  printlnEx("<b>Scan Completed</b>"); break;
+      case WL_CONNECTED:       printlnEx("<b>Connected</b>"); break;
+      case WL_CONNECT_FAILED:  printlnEx("<b>Connect Failed</b>"); break;
+      case WL_CONNECTION_LOST: printlnEx("<b>Connection Lost</b>"); break;
+      case WL_DISCONNECTED:    printlnEx("<b>Disconnected</b>"); break;
+      default:                 printlnEx("<b>Unknown Status</b>"); break;
+    }
     // printEx(currentMillis3);
     // printEx("   ");
     // printEx(lastNtpUpdate);
@@ -740,15 +757,15 @@ void loop() {
     //printlnEx(filterStatus);
     //printlnEx(filterCommand);
     //printlnEx(filterHighLow);
-
+    
     printEx("Transision in input state ............: ");
     printlnEx(transitionCount);
     printEx("Transition Debounced Input ############ : ");
     printlnEx(transitionCountInput);
     printEx("lastLowDuration ############ : ");
     printlnEx(lastLowDuration);   
-    //printEx("lastLongLowDuration ############ : ");
-    //printlnEx(lastLongLowDuration);  
+    // printEx("lastLongLowDuration ############ : ");
+    // printlnEx(lastLongLowDuration);  
 
     printEventLog();
      
@@ -764,20 +781,19 @@ void loop() {
       //String payload = "{\"time_left\": 3600}";  // Replace 3600 with your actual time left in seconds
       //client.publish("home/sensor/timer/countdown", payload.c_str());
       
-      // String message = "Hello, world!";
-      // char msgBuffer[message.length() + 1];
-      // message.toCharArray(msgBuffer, message.length() + 1);
-      // client.publish("home/display/text", msgBuffer);
+      String message = "Hello, world!";
+      char msgBuffer[message.length() + 1];
+      message.toCharArray(msgBuffer, message.length() + 1);
+      client.publish("home/display/text", msgBuffer);
 
 
-      printlnEx("Publish: {" + filterStatus + "} to: " + "home/sensor/filterStatus");
-      printlnEx("Publish: {" + filterCommand + "} to: " + "home/sensor/filterCommand");
-      printlnEx("Publish: {" + filterHighLow + "} to: " + "home/sensor/filterHighLow");
+      printlnEx("Publish: <b>" + filterStatus + "</b> to: " + "home/sensor/filterStatus");
+      printlnEx("Publish: <b>" + filterCommand + "</b> to: " + "home/sensor/filterCommand");
+      printlnEx("Publish: <b>" + filterHighLow + "</b> to: " + "home/sensor/filterHighLow");
 
       printlnEx(" ");
-
       printEx("Home Assistant Has Control: ");
-      printlnEx(HAinControl);
+      printlnEx(HAinControl, 2);
       printlnEx(" ");
 
       // Convert times and publish them
@@ -788,22 +804,23 @@ void loop() {
       String s5 = convertTime((countdownHours * 100) + countdownMinutes);
       
 
-      printlnEx("Publish: {" + s1 + "} to: " + "home/pool_pump/start_time_1");
+      printlnEx("Publish: <b>" + s1 + "</b> to: " + "home/pool_pump/start_time_1");
       client.publish("home/pool_pump/start_time_1", s1.c_str());
 
-      printlnEx("Publish: {" + s2 + "} to: " + "home/pool_pump/stop_time_1");
+      printlnEx("Publish: <b>" + s2 + "</b> to: " + "home/pool_pump/stop_time_1");
       client.publish("home/pool_pump/stop_time_1", s2.c_str());
 
-      printlnEx("Publish: {" + s3 + "} to: " + "home/pool_pump/start_time_2");
+      printlnEx("Publish: <b>" + s3 + "</b> to: " + "home/pool_pump/start_time_2");
       client.publish("home/pool_pump/start_time_2", s3.c_str());
 
-      printlnEx("Publish: {" + s4 + "} to: " + "home/pool_pump/stop_time_2");
+      printlnEx("Publish: <b>" + s4 + "</b> to: " + "home/pool_pump/stop_time_2");
       client.publish("home/pool_pump/stop_time_2", s4.c_str());
 
-      printlnEx("Publish: {" + s5 + "} to: " + "home/pool_pump/manual_run_time");
+      printlnEx("Publish: <b>" + s5 + "</b> to: " + "home/pool_pump/manual_run_time");
       client.publish("home/pool_pump/manual_run_time", s5.c_str());     
 
       //printlnEx(toggledOnce);
+      printlnEx(" ");
     }
     digitalWrite(LED_PIN, HIGH);  // Turn the LED on
     //delay(100);                   // Wait for 500ms
@@ -834,6 +851,11 @@ void loop() {
       //printlnEx("LED is OFF");
     }
   }
+
+
+  // Get current time
+  //int currentHour = 0;
+ // int currentMinute = 0;
 
   // Read input state
   bool inputState = debouncedState;
@@ -874,11 +896,13 @@ void loop() {
     timerOneActive = isTimerActive(currentTime24hourFormat, starttime1, stoptime1);
     timerTwoActive = isTimerActive(currentTime24hourFormat, starttime2, stoptime2);
     printEx("Timer One Active: ");
-    printlnEx(timerOneActive ? "Yes" : "No");
+    printlnEx(timerOneActive ? "<b>Yes</b>" : "<b>No</b>");
     printEx("Timer Two Active: ");
-    printlnEx(timerTwoActive ? "Yes" : "No");
+    printlnEx(timerTwoActive ? "<b>Yes</b>" : "<b>No</b>");
+    printlnEx(" ");    
     printEx("Is Auto Active: ");
-    printlnEx(isAuto ? "Yes" : "No");
+    printlnEx(isAuto ? "<b>Yes</b>" : "<b>No</b>");
+    printlnEx(" ");      
   }
 
   if (isAuto == true) {
@@ -1052,13 +1076,13 @@ void readFromEEPROM(long &starttime1, long &stoptime1, long &starttime2, long &s
   // Print the updated times
   printlnEx("Reedings from EEPROM:");
   printEx("starttime1: ");
-  printlnEx(starttime1);
+  printlnEx(starttime1, true);
   printEx("stoptime1: ");
-  printlnEx(stoptime1);
+  printlnEx(stoptime1,true);
   printEx("starttime2: ");
-  printlnEx(starttime2);
+  printlnEx(starttime2, true);
   printEx("stoptime2: ");
-  printlnEx(stoptime2);
+  printlnEx(stoptime2, true);
 
   delay(5000); 
 }
@@ -1087,12 +1111,48 @@ void printEx(int value) {
   truncateSerialOutput(3000);
 }
 
-void printlnEx(int value) {
-  Serial.println(value);    // Print to Serial Monitor with newline
-  serialOutput += String(value);    // Store in serialOutput
-  serialOutput += "\n";       // Append newline to serialOutput
+void printlnEx(int value, int formatMode) {
+  String formatted;
+  String htmlFormatted;
+
+  switch (formatMode) {
+    case 1:  // Format as time
+      if (value >= 0 && value <= 2359) {
+        int hours = value / 100;
+        int minutes = value % 100;
+        if (minutes < 60) {
+          formatted = String(hours) + ":";
+          if (minutes < 10) formatted += "0";
+          formatted += String(minutes);
+          htmlFormatted = "<strong><span style='color:#000000; font-size:1.1em;'>" + formatted + "</span></strong>";
+          break;
+        }
+      }
+      // fall through to default if invalid time
+
+    case 2:  // Format as boolean text
+      formatted = (value == 0) ? "FALSE" : "TRUE";
+      htmlFormatted = (value == 0)
+                      ? "<strong><span style='color:#8B0000; font-size:1.1em;'>FALSE</span></strong>"  // Dark red
+                      : "<strong><span style='color:#006400; font-size:1.1em;'>TRUE</span></strong>"; // Dark green
+      break;
+
+    case 0:  // Raw output
+    default:
+      formatted = String(value);
+      htmlFormatted = "<b><span style='color:black; font-size:1.1em;'>" + formatted + "</span></b>";
+      break;
+  }
+
+  Serial.println(formatted);                // plain text to serial monitor
+  serialOutput += htmlFormatted + "\n";     // formatted HTML for web
   truncateSerialOutput(3000);
 }
+
+
+
+
+
 
 // Assuming serialOutput is a global String variable
 // Function to truncate serialOutput to maxLength characters
@@ -1272,12 +1332,13 @@ void handlePowerKill(unsigned long currentTime) {
 // Function to check if the timer is active
 bool isTimerActive(int currentTime, int startTime, int stopTime) {
   // Print the values for debugging
-  printEx("Current Time: ");
-  printlnEx(currentTime);
-  printEx("Start Time: ");
-  printlnEx(startTime);
-  printEx("Stop Time: ");
-  printlnEx(stopTime);
+  // printlnEx(" ");
+  // printEx("Current Time: ");
+  // printlnEx(currentTime, true);
+  // printEx("Start Time: ");
+  // printlnEx(startTime, true);
+  // printEx("Stop Time: ");
+  // printlnEx(stopTime, true);
 
   if (startTime < stopTime) {
     // Normal case: timer does not span over midnight
@@ -1364,7 +1425,7 @@ void countDownTimer() {
         sprintf(timeFormatted, "%d:%02d", hours, minutes);  // ensures leading zero on minutes
 
         printEx("currentTime = ");
-        printlnEx(currentTime24hourFormat);
+        printlnEx(currentTime24hourFormat, true);
 
         //publishString = String("Automatic Mode is Active - Starting Pump in ") + timeFormatted + " minutes";
         publishString = "Automatic Mode is Active - Starting Pump in " + String(hours) + " hours " + String(minutes) + " minutes";
@@ -1427,6 +1488,7 @@ void countDownTimer() {
         unsigned int minutes = (countdownTime % (60 * 60 * 1000)) / (60 * 1000);
 
         // Print time remaining
+        printlnEx(" ");
         printEx("Time remaining: ");
         printEx(hours);
         printEx(":");
@@ -1447,11 +1509,11 @@ void countDownTimer() {
         // Publish the time string
         if(countdownDisabled == 0){
           client.publish("home/sensor/timer/countdown", timeString.c_str());
-          printlnEx(F("client.publish(home/sensor/timer/countdown, timeString.c_str());"));
+          //printlnEx(F("client.publish(home/sensor/timer/countdown, timeString.c_str());"));
         }
         else { 
           client.publish("home/sensor/timer/countdown", "Disabled");
-          printlnEx(F("client.publish(home/sensor/timer/countdown, Disabled"));
+          //printlnEx(F("client.publish(home/sensor/timer/countdown, Disabled"));
         }  
       }
     }
