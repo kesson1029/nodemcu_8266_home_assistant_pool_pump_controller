@@ -1,6 +1,7 @@
 # NodeMCU ESP8266 Pool Pump Controller with Home Assistant
 
 This project enables you to control a pool pump remotely using a NodeMCU ESP8266 microcontroller integrated with Home Assistant via MQTT. The system allows you to turn the pump on/off manually or automate it based on a schedule, providing a cost-effective solution for pool maintenance.
+![image](https://github.com/user-attachments/assets/24ec2ab9-2674-4038-be94-181913472a68)
 
 #### If you’ve ever found yourself wanting to control your pool filter through Home Assistant—like I did—this project might give you a solid starting point. I built this so I could monitor and control the pool filter remotely while we travel. It’s been helpful for peace of mind, and maybe it’ll be useful for you too.
 
