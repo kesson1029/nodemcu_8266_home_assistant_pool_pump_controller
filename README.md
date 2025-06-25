@@ -35,7 +35,11 @@ This project enables you to control a pool pump remotely using a NodeMCU ESP8266
 
 ## Hardware Requirements
 - **NodeMCU ESP8266** (e.g., NodeMCU V3).
+![2025-06-23_13-10-28](https://github.com/user-attachments/assets/e0309f54-5547-42d5-b8e0-0b26bbacd5b0)
+
 - **Single-channel 5V relay module** (active-low, compatible with 3.3V logic).
+![2025-06-23_13-09-17](https://github.com/user-attachments/assets/27a46428-353d-4dec-b65a-47f5186acbe7)
+
 - **Pool pump** (AC-powered, compatible with relay rating, typically <10A).
 - **Jumper wires** and a **breadboard** (optional).
 - **5V USB power adapter** for the NodeMCU.
@@ -44,6 +48,8 @@ This project enables you to control a pool pump remotely using a NodeMCU ESP8266
 **Warning**: Working with high-voltage devices like pool pumps can be dangerous. Ensure all connections are properly insulated and comply with local electrical codes. Consult a licensed electrician for AC wiring.
 
 ## Wiring Diagram
+![wiring_diagram](https://github.com/user-attachments/assets/9fe858d5-0e4d-46ed-953d-0b4e7586b404)
+
 Connect the components as follows:
 
 | NodeMCU Pin | Relay Module Pin | Description |
