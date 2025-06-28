@@ -28,6 +28,9 @@ bool ledOn = false;           // Store the current LED state
 bool HAinControl = false;
 bool pool_pump_serial_monitor = false;
 
+String resetReason;  // Permanent variable
+
+
 long intervalLedFlash = 200;  // Interval at which to blink (milliseconds)
 unsigned long previousMillis = 0;  // Will store the last time LED was updated
 int ledState = LOW;  // ledState used to set the LED
@@ -42,6 +45,10 @@ long starttime1 = 0;
 long stoptime1 = 0;
 long starttime2 = 0;
 long stoptime2 = 0;
+long countdownHours = 4;
+long countdownMinutes = 0;
+
+int test2 = 2;
 
 bool vfdReady = false;
 unsigned long vfdStartTime = 0;
@@ -50,19 +57,17 @@ bool vfdStarting = false;
 // Define NTP Client to get time
 WiFiUDP ntpUDP;
 const long utcOffsetInSeconds = -14400; // Adjust this to your local timezone
-NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetInSeconds, 600000);
+NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetInSeconds, 1800000);
 
 unsigned long lastNtpUpdate = 0;
-const unsigned long ntpUpdateInterval = 600000;  // Update every 10 minutes
+const unsigned long ntpUpdateInterval = 1801000;  // Update every 30 minutes
 
 unsigned long lastEpochTime = 0;
 unsigned long lastMillis = 0;
 unsigned long lastPrintTime = 0;
 const unsigned long printInterval = 10000;  // Print every 10 seconds
 const unsigned long intervalTimerCheck = 10000; // 10 seconds
-int countdownHours = 2;
-int test2 = 2;
-int countdownMinutes = 0;
+
 
 int countdownDisabled = 0;
 
@@ -80,8 +85,9 @@ String publishString ="";
 int minutesToStart = 0;
 int currentTime24hourFormat = 0;
 
+int eePromReadErrorCount = 0;
 
-const int MAX_EVENTS = 10;
+const int MAX_EVENTS = 100;
 String eventTimes[MAX_EVENTS];
 String eventLog[MAX_EVENTS];  // <-- declare this globally
 int eventIndex = 0;
@@ -120,7 +126,7 @@ unsigned long cnt1 = 0;
 bool isAuto = true;
 bool oneShot = false;
 unsigned long LOWtoHIGHorHIGHtoLOW_Counter = 0;
-unsigned long isAutoCounter = 0;
+//unsigned long isAutoCounter = 0;
 unsigned long currentInputState_lastInputState_Count = 0;
 //RTC_DS3231 rtc;  // Initialize RTC object
 
@@ -145,6 +151,8 @@ const unsigned long publishInterval = 10000;  // 5 seconds in milliseconds
 
 void printlnEx(const String &message);
 void printlnEx(int value, int formatMode = 0);
+
+#define LOG_EVENT(label) logEventTime(label, __LINE__)
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -171,7 +179,10 @@ void setup() {
   toggleState = 1;
 
   Serial.begin(115200);
+  delay(100);
   
+  resetReason = String(ESP.getResetReason());
+
   // Setup WiFi
   setup_wifi();
 
@@ -340,7 +351,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
     
     if (message == "auto")  {
       filterStatus = "auto";
-      resetEventLog();
+      
       client.publish("home/sensor/filterStatus", String(filterStatus).c_str());
       //client.publish("home/sensor/timer/countdown", "00:00:00");
       isAuto = true;
@@ -358,6 +369,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
     if (message == "high")  {
       filterHighLow = "high";
       client.publish("home/sensor/filterHighLow", String(filterHighLow).c_str());
+      resetEventLog();
     }      
     if (message == "low")  {
       filterHighLow = "low";
@@ -455,22 +467,27 @@ void callback(char* topic, byte* payload, unsigned int length) {
       printlnEx(F("The string does not contain 'time'."));
     }
 
-    if (message.indexOf("pool_pump_serial_monitor") != -1) {
+    if (message.indexOf("AutoDisableStatus") != -1) {
+      //LOG_EVENT("AutoDisableStatus Received ");
       int commaPos = message.indexOf(',');
       if (commaPos != -1) {
         firstPart = message.substring(0, commaPos);
         secondPart = message.substring(commaPos + 1);
-        //printlnEx(firstPart);
-        //printlnEx(secondPart);
-        if(firstPart == "on" ){
+        printlnEx(firstPart);
+        printlnEx(secondPart);
+        printlnEx(commaPos);
+        printlnEx(" ");
+        if(secondPart == "on" ){
           printlnEx("Serial Monitor Off");
           pool_pump_serial_monitor = true;
+          LOG_EVENT("pool_pump_serial_monitor on ");
         }
-        if(firstPart == "off" ){
+        if(secondPart == "off" ){
           serialOutput = "";
           output = "";
           printlnEx("Serial Monitor On");
           pool_pump_serial_monitor = false;
+          LOG_EVENT("pool_pump_serial_monitor off ");
          
         }        
       }
@@ -529,6 +546,7 @@ void reconnect() {
 void printEventLog() {
   if (eventIndex == 0) return;  // Skip if no events logged
 
+  printlnEx(" ");
   printlnEx("Logged Timestamps:");
   for (int i = 0; i < eventIndex; i++) {
     printEx("Event ");
@@ -539,16 +557,17 @@ void printEventLog() {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void logEventTime(const String& label) {
+void logEventTime(const String& label, int line) {
   if (eventIndex < MAX_EVENTS) {
     String timestamp = 
       (millis() / 3600000 < 10 ? "0" : "") + String(millis() / 3600000) + ":" +
       ((millis() / 60000) % 60 < 10 ? "0" : "") + String((millis() / 60000) % 60) + ":" +
       ((millis() / 1000) % 60 < 10 ? "0" : "") + String((millis() / 1000) % 60);
 
-    eventTimes[eventIndex++] = label + " @ " + timestamp;
+    eventTimes[eventIndex++] = label + " @ " + timestamp + " (line " + String(line) + ")";
   }
 }
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 int timeToMinutes(int hhmm) {
   int hours = hhmm / 100;
@@ -591,7 +610,7 @@ void loop() {
   int cln = currentMillis3 - lastNtpUpdate;
   if (wfs == WL_CONNECTED && currentMillis3 - lastNtpUpdate >= ntpUpdateInterval) {
     printlnEx(" ");
-    printEx(F("Update NTP time every 10 seconds"));
+    printEx(F("Update NTP time every 30 minutes"));
     if (timeClient.update()) {
       lastEpochTime = timeClient.getEpochTime();
       lastMillis = millis();
@@ -599,10 +618,12 @@ void loop() {
       printlnEx(" ");
       printEx("lastEpochTime : ");
       printlnEx(lastEpochTime);
+      //LOG_EVENT("timeClient Update SUCCESSFUL ");
     }else{
      printlnEx(" ");
      printEx("timeClient.update Failed : ");
      lastNtpUpdate = currentMillis3; 
+     LOG_EVENT("timeClient Update Failed ");
     }
     printlnEx(" "); 
   }
@@ -628,7 +649,7 @@ void loop() {
 
   if ((now2 - lastDebounceTime) > debounceDelay && debouncedState != inputValue) {
     debouncedState = inputValue;
-    logEventTime( "609");
+    LOG_EVENT("Debounced input tripped");
     transitionCountInput++;
     printEx("[DEBOUNCED] Transition #");
     printlnEx(transitionCountInput);
@@ -753,8 +774,8 @@ void loop() {
     printlnEx(counter);
     printEx(F("LOWtoHIGHorHIGHtoLOW_Counter count: "));
     printlnEx(LOWtoHIGHorHIGHtoLOW_Counter);
-    printEx("isAutoCounter count: ");
-    printlnEx(isAutoCounter);
+   // printEx("isAutoCounter count: ");
+   // printlnEx(isAutoCounter);
     printEx("currentInputState_lastInputState_Count count: ");
     printlnEx(currentInputState_lastInputState_Count);    
     printlnEx(" ");
@@ -762,6 +783,10 @@ void loop() {
     //printlnEx(filterCommand);
     //printlnEx(filterHighLow);
     
+    
+    printlnEx("Reset Reason: <span style='font-weight:bold; font-size:1.1em;'>" + resetReason + "</span>");
+    printlnEx(" ");
+
     printEx("Transision in input state ............: ");
     printlnEx(transitionCount);
     printEx("Transition Debounced Input ############ : ");
@@ -770,6 +795,15 @@ void loop() {
     printlnEx(lastLowDuration);   
     // printEx("lastLongLowDuration ############ : ");
     // printlnEx(lastLongLowDuration);  
+
+    printlnEx(" ");
+    printEx("EEProm Read Error Counter : ");
+    printlnEx(eePromReadErrorCount);  
+     
+    printEx("countdownMinutes : ");
+    printlnEx(countdownMinutes);   
+    printEx("countdownHours : ");
+    printlnEx(countdownHours);  
 
     printEventLog();
      
@@ -869,7 +903,6 @@ void loop() {
 
   // Handle Manual input
   if (HAinControl == false && isAuto == false){
-    //logEventTime("839");
     handleInput(inputState, currentTimeMills);
     //printEx("Home Assistant Has Control: ");
     //printlnEx("False");
@@ -928,7 +961,7 @@ void loop() {
       }
     }
   }else{
-    isAutoCounter = isAutoCounter + 1;
+   // isAutoCounter = isAutoCounter + 1;
     filterStatus = "manual";
     
   }
@@ -1026,59 +1059,71 @@ void readFromEEPROM(long &starttime1, long &stoptime1, long &starttime2, long &s
   // Read starttime1 from EEPROM
   EEPROM.get(addr, starttime1);
   addr += sizeof(starttime1);
-  if (starttime1 < 1){
+  if (starttime1 < 1 || starttime1 > 2359) {
     starttime1 = 1000;
+    eePromReadErrorCount++; 
+    LOG_EVENT("starttime1");
     printEx("EEPROM ERROR"); 
   }
 
   // Read stoptime1 from EEPROM
   EEPROM.get(addr, stoptime1);
   addr += sizeof(stoptime1);
-  if (stoptime1 < 1){
+  if (stoptime1 < 1 || stoptime1 > 2359) {
     stoptime1 = 1600;
+    eePromReadErrorCount++;
+    LOG_EVENT("stoptime1");
     printEx("EEPROM ERROR"); 
   } 
 
   // Read starttime2 from EEPROM
   EEPROM.get(addr, starttime2);
   addr += sizeof(starttime2);
-  if (starttime2 < 1){
+  if (starttime2 < 1 || starttime2 > 2359) {
     starttime2 = 2200;
+    eePromReadErrorCount++;
+    LOG_EVENT("starttime2");
     printEx("EEPROM ERROR"); 
   } 
 
   // Read stoptime2 from EEPROM
   EEPROM.get(addr, stoptime2);
   addr += sizeof(stoptime2);
-  if (stoptime2 < 1){
+  if (stoptime2 < 1 || stoptime2 > 2359) {
     stoptime2 = 400;
+    eePromReadErrorCount++;
+    LOG_EVENT("stoptime2");
     printEx("EEPROM ERROR"); 
   } 
   // Read countdownHours from EEPROM
   EEPROM.get(addr, countdownHours);
   addr += sizeof(countdownHours);
-  if (countdownHours < 1){
-    countdownMinutes = 10;
+  if (countdownHours < 0 || countdownHours > 23) {
+    countdownHours = 10;
+    eePromReadErrorCount++;
+    LOG_EVENT("countdownHours");
     printEx("EEPROM ERROR");
   }
   // Read countdownMinutes from EEPROM
   EEPROM.get(addr, countdownMinutes);
   addr += sizeof(countdownMinutes);
-  if (countdownMinutes < 0){
+  if (countdownMinutes < 0 || countdownMinutes > 59) {
     countdownMinutes = 5;
+    eePromReadErrorCount++;
+    LOG_EVENT("countdownMinutes");
     printEx("EEPROM ERROR"); 
   }
   
   EEPROM.end(); // End EEPROM access
 
   // Check if values are uninitialized (-1) and set to 0 if they are
-  if (starttime1 == -1) starttime1 = 0;
-  if (stoptime1 == -1) stoptime1 = 0;
-  if (starttime2 == -1) starttime2 = 0;
-  if (stoptime2 == -1) stoptime2 = 0;
+  if (starttime1 == -1) starttime1 = 1000;
+  if (stoptime1 == -1) stoptime1 = 1600;
+  if (starttime2 == -1) starttime2 = 2200;
+  if (stoptime2 == -1) stoptime2 = 400;
 
   // Print the updated times
-  printlnEx("Reedings from EEPROM:");
+  printlnEx("Readings from EEPROM:");
   printEx("starttime1: ");
   printlnEx(starttime1, true);
   printEx("stoptime1: ");
@@ -1087,6 +1132,10 @@ void readFromEEPROM(long &starttime1, long &stoptime1, long &starttime2, long &s
   printlnEx(starttime2, true);
   printEx("stoptime2: ");
   printlnEx(stoptime2, true);
+  printEx("countdownHours: ");
+  printlnEx(countdownHours, 0);
+  printEx("countdownMinutes: ");
+  printlnEx(countdownMinutes, 0);
 
   delay(5000); 
 }
@@ -1190,7 +1239,7 @@ void handleInput(bool inputState, unsigned long currentTime) {
   if (inputState == HIGH) {
     if(toggleState == 0){
       if (vfdReady) {
-        logEventTime("1105");
+        LOG_EVENT("vfdReady - toggleState == 0");
         digitalWrite(outputLowPin, LOW);
         digitalWrite(outputHighPin, HIGH);
       }
@@ -1204,7 +1253,7 @@ void handleInput(bool inputState, unsigned long currentTime) {
     }
     if(toggleState == 1){
       if (vfdReady) {
-        logEventTime("1120");
+        LOG_EVENT("vfdReady - toggleState == 1");
         digitalWrite(outputLowPin, LOW);
         digitalWrite(outputHighPin, LOW);
       }  
@@ -1526,10 +1575,12 @@ void countDownTimer() {
 
         // Concatenate hours and minutes into a time string
         String timeString = hoursStr + ":" + minutesStr;
-
+        publishString = "Manual Mode is Active - Automatic will start in " + String(hoursStr) + " hours " + String(minutesStr) + " minutes";
         // Publish the time string
         if(countdownDisabled == 0){
-          client.publish("home/sensor/timer/countdown", timeString.c_str());
+
+          //client.publish("home/sensor/timer/countdown", timeString.c_str());
+          client.publish("home/sensor/timer/countdown", publishString.c_str());
           //printlnEx(F("client.publish(home/sensor/timer/countdown, timeString.c_str());"));
         }
         else { 
