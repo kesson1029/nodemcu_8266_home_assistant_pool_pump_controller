@@ -4,7 +4,9 @@ This project enables you to control a pool pump remotely using a NodeMCU ESP8266
 
 #### After the first USB flash of the **NodeMCU (ESP8266)**, all subsequent program uploads can be done over Wi-Fi.
 
-This makes it easy to place the **NodeMCU (ESP8266)** control board in a fixed location—such as the basement near the VFD/controller—without needing to remove it or bring it back to a USB port or the need for a laptop. **All the ESP8266 requires is a Wi-Fi connection on your local network.**
+This makes it easy to place the **NodeMCU (ESP8266)** control board in a fixed location—such as the basement near the VFD/controller—without needing to remove it or bring it back to a USB port or the need for a laptop. 
+
+**All the ESP8266 requires is a Wi-Fi connection on your local network.**
 
 ![image](https://github.com/user-attachments/assets/24ec2ab9-2674-4038-be94-181913472a68)
 
