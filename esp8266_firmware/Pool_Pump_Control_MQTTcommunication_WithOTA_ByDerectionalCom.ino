@@ -186,45 +186,71 @@ void setup() {
   // Setup WiFi
   setup_wifi();
 
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-    String html = "<html><head><title>Pool Filter ESP8266 Serial Monitor</title>";
-    html += "<style>";
-    html += "body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }";
-    html += "#container { display: flex; flex-direction: column; height: 100%; }";
-    html += "#output { flex-grow: 1; overflow-y: scroll; }";
-    html += "</style></head>";
-    html += "<body><div id='container'>";
-    html += "<h1>Pool Filter ESP8266 Serial Monitor</h1>";
-    html += "<button onclick='clearScreen()'>Clear Screen</button>";
-    html += "<pre id='output'></pre>";
-    html += "</div>";
-    html += "<script>";
-    html += "function clearScreen() {";
-    html += "  document.getElementById('output').innerHTML = '';";
-    html += "}";
-    html += "function scrollToBottom() {";
-    html += "  var output = document.getElementById('output');";
-    html += "  output.scrollTop = output.scrollHeight;";
-    html += "}";
-    html += "setInterval(function(){";
-html += "  fetch('/serial').then(response => response.text()).then(data => {";
-html += "    if (data.startsWith('[CLEAR]')) {";
-html += "      document.getElementById('output').innerHTML = data.substring(7);";
-html += "    } else {";
-html += "      document.getElementById('output').innerHTML += data;";
-html += "    }";
-html += "    scrollToBottom();";
-html += "  });";
-    html += "}, 1000);";
-    html += "</script></body></html>";
-    request->send(200, "text/html", html);
-  });
-  // Route to fetch serial data
-  server.on("/serial", HTTP_GET, [](AsyncWebServerRequest *request){
-    output = serialOutput;
-    serialOutput = ""; // Clear buffer after sending
-    request->send(200, "text/plain", output);
-  });
+server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+  String html = "<html><head><title>Pool Filter ESP8266 Serial Monitor</title>";
+  html += "<style>";
+  html += "body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }";
+  html += "#container { display: flex; flex-direction: column; height: 100%; padding: 10px; box-sizing: border-box; }";
+  html += "#output { flex: 1 1 auto; overflow-y: auto; }";
+  html += "</style></head>";
+  
+  html += "<body><div id='container'>";
+  html += "<h1>Pool Filter ESP8266 Serial Monitor</h1>";
+  html += "<button onclick='clearScreen()'>Clear Screen</button>";
+  html += "<div id='scroll-warning' style='display:none; background:#fffae6; padding:5px; font-family:sans-serif;'>";
+  html += "Auto-scroll paused <button onclick='resumeAutoScroll()' style='margin-left:10px;'>Resume Auto-Scroll</button>";
+  html += "</div>";
+  html += "<pre id='output'></pre>";
+  html += "</div>";
+
+  html += "<script>";
+  html += "var autoScroll = true;";  // ← moved out of onload
+  html += "function clearScreen() {";
+  html += "  document.getElementById('output').innerHTML = '';";
+  html += "}";
+  html += "function scrollToBottom() {";
+  html += "  var output = document.getElementById('output');";
+  html += "  output.scrollTop = output.scrollHeight;";
+  html += "}";
+  html += "function resumeAutoScroll() {";
+  html += "  autoScroll = true;";
+  html += "  var output = document.getElementById('output');";
+  html += "  output.scrollTop = output.scrollHeight;";
+  html += "  document.getElementById('scroll-warning').style.display = 'none';";
+  html += "}";
+
+  html += "window.onload = function() {";
+  html += "  var output = document.getElementById('output');";
+  html += "  output.addEventListener('scroll', function() {";
+  html += "    autoScroll = output.scrollTop + output.clientHeight >= output.scrollHeight - 5;";
+  html += "    document.getElementById('scroll-warning').style.display = autoScroll ? 'none' : 'block';";
+  html += "  });";
+
+  html += "  setInterval(function() {";
+  html += "    fetch('/serial').then(response => response.text()).then(data => {";
+  html += "      if (data.startsWith('[CLEAR]')) {";
+  html += "        output.innerHTML = data.substring(7);";
+  html += "      } else {";
+  html += "        output.innerHTML += data;";
+  html += "      }";
+  html += "      if (autoScroll) {";
+  html += "        output.scrollTop = output.scrollHeight;";
+  html += "      }";
+  html += "    });";
+  html += "  }, 1000);";
+  html += "};";
+  html += "</script></body></html>";
+
+  request->send(200, "text/html", html);
+});
+
+// Route to fetch serial data
+server.on("/serial", HTTP_GET, [](AsyncWebServerRequest *request){
+  output = serialOutput;
+  serialOutput = ""; // Clear buffer after sending
+  request->send(200, "text/plain", output);
+});
+
 
 
 
@@ -784,7 +810,7 @@ void loop() {
     //printlnEx(filterHighLow);
     
     
-    printlnEx("Reset Reason: <span style='font-weight:bold; font-size:1.1em;'>" + resetReason + "</span>");
+    printlnEx("Last Restart/Reset Reason: <span style='font-weight:bold; font-size:1.1em;'>" + resetReason + "</span>");
     printlnEx(" ");
 
     printEx("Transision in input state ............: ");
